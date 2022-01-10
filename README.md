@@ -1,9 +1,9 @@
 # file_select
 
 This repository contains a python script to select fastq files with a user supplied text file of sample 
-identifiers found in the fastq file names. Files are moved to a new directory (keep) and a csv file is 
+identifiers found in the fastq file names. Files are copied to a new directory (keep) and a csv file is 
 written with rows for sample identifiers and their forward and reverse read file names, respectively. The output 
-csv file and directory (keep) of fastq files can be used for uploading fastq files to NCBI.
+csv file and directory (keep) of fastq files are used for uploading fastq files to NCBI.
 
 Language:
 Python version 3.10.0 
@@ -28,6 +28,5 @@ See documentation for other conda commands:
 https://docs.conda.io/projects/conda/en/latest/commands.html
 
 Instructions before running file_select.py: \
-create a directory that contains fastq files within subdirectories 
-'fastq_path_R1' for forward reads and 'fastq_path_R2' for reverse reads. Create an empty subdirectory
-'keep' and a tab deliminated text file of sample identifiers found in the fastq file names.
+Fill 'fastq_R1' with your forward read fastq files and 'fastq_R2' with your reverse read fastq files. 
+In the 'Sample_keep.txt' file add all sample ids which will be used to subset your fastq files.
