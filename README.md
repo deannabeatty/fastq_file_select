@@ -1,4 +1,4 @@
-# file_select
+# fastq_file_select
 
 This repository contains a python script to select fastq files with a user supplied text file of sample 
 identifiers found in the fastq file names. Files are copied to a new directory (keep) and a csv file is 
