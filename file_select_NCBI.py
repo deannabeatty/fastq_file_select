@@ -15,50 +15,82 @@ from shutil import copy2
 from pandas import DataFrame
 from csv import writer
 
-# open sample_keep file to get list of sample identifiers to keep
-keep = []
-with open('Sample_keep.txt', 'r') as keep_nums:
-    keep = keep_nums.read().splitlines()
 
-# create path variables
-fastq_path_R1 = Path('./fastq_R1')
-fastq_path_R2 = Path('./fastq_R2')
-keep_path = Path('./keep')
+# subset_fastq_files function
+def subset_fastq_files(fastq_source_dir, fastq_keep_dir, sample_id_keep_list, fastq_subset_file_list):
+    '''
+    Function to subset source directory of fastq files based on user provided valid sample IDs.
 
-# use lists (indexed and ordered) within each for loop for forward (R1) and reverse (R2) reads
-cols_R1 = ['SampleID', 'filename_R1']
-cols_R2 = ['SampleID', 'filename_R2']
-row_R1 = []
-row_R2 = []
+    Sample IDs provided in 'sample_id_keep_list' will be used to select fastq files using the following criteria:
+        * First item (before '_') in fastq file name == 'sample_id'
+    
+    Example:
+        - Files in fastq_source_dir:
+            '1_S1_L001_R1_001.fastq',
+            '2_S13_L001_R1_001.fastq',
+            '5_S49_L001_R1_001.fastq'
 
-# Forward reads *R1_001.fastq.gz
-# if 0th item of name.split is in keep list, copy file to keep dir
-# assign 0th item of name.split to variable SampleID
-# assign filepath to FileNameR1 variable
-# append each variable to ith row of list 'row_R1'
-for filepath in fastq_path_R1.glob('*'):
-    if filepath.name.split('_')[0] in keep:
-        copy2(filepath, str(keep_path) + f'/{filepath.name}')
-        SampleID = filepath.name.split('_')[0]
-        FileNameR1 = filepath.name
-        row_R1.append([ str(SampleID), str(FileNameR1) ]) 
+        - sample_id_keep_list: [ 1, 5 ]
 
-# create dataframe of SampleId and FileNameR1 from for loop with appended rows       
-df1 = DataFrame(row_R1, columns = cols_R1)
+        - fastq_subset_file_list: [
+            [ '1', '1_S1_L001_R1_001.fastq'  ],
+            [ '5', '5_S49_L001_R1_001.fastq' ]
+        ]
+    
+        - New directory containing selected files will be create at 'fastq_keep_dir':
+            '1_S1_L001_R1_001.fastq',
+            '5_S49_L001_R1_001.fastq'
 
-# repeat for loop for reverse reads *R2_001.fastq.gz, fastq_path_R2, and list 'row_R2'
-for filepath in fastq_path_R2.glob('*'):
-    if filepath.name.split('_')[0] in keep:
-        copy2(filepath, str(keep_path) + f'/{filepath.name}')
-        SampleID = filepath.name.split('_')[0]
-        FileNameR2 = filepath.name
-        row_R2.append([ str(SampleID), str(FileNameR2) ]) 
+    Parameters 
+    ----------
+    fastq_source_dir: Directory containing fastq files (forward or reverse).
 
-# create dataframe of SampleId and FileNameR2 from for loop with appended rows       
-df2 = DataFrame(row_R2, columns = cols_R2)
+    fastq_keep_dir: Copy fastq files to this path if they meet 'keep' criteria.
 
-# leftjoin df2 to df1 on common column SampleID
-df3 = df1.merge(df2, on=[ "SampleID" ], how='left')
+    sample_id_keep_list: List of user provided sample ids to define 'keep' criteria.
 
-# write csv of df3 (three columns: SampleID, FileNameR1, FileNameR2)
-df3.to_csv("SampleID_fastq.csv", header = True, index = False)
+    fastq_subset_file_list: For files that meet 'keep' criteria, append sample id and file name to this list.
+    '''
+
+    for file in fastq_source_dir.glob('*'):
+        if file.name.split('_')[0] in sample_id_keep_list:
+            copy2(file, str(fastq_keep_dir) + f'/{file.name}')
+            SampleID = file.name.split('_')[0]
+            file_name = file.name
+            fastq_subset_file_list.append([ str(SampleID), str(file_name) ])
+
+# main
+def main():
+    # open sample_keep file to get list of sample identifiers to keep
+    keep_sample_ids = []
+    with open('Sample_keep.txt', 'r') as keep_nums:
+        keep_sample_ids = keep_nums.read().splitlines()
+
+    # create path variables
+    fastq_path_R1 = Path('./fastq_R1')
+    fastq_path_R2 = Path('./fastq_R2')
+    keep_path = Path('./keep')
+
+    # use lists (indexed and ordered) within each for loop for forward (R1) and reverse (R2) reads
+
+    # Create fastq subset for forward reads (R1). Create a dataframe from this subset.
+    R1_list = [] # Create empty list for forward reads to be kept. Rows will be appended for forward reads that match 'keep' criteria.
+    R1_cols = ['SampleID', 'filename_R1'] # Define column headers
+    subset_fastq_files(fastq_path_R1, keep_path, keep_sample_ids, R1_list)       
+    df_forward_read_subset = DataFrame(R1_list, columns = R1_cols)
+
+    # Create fastq subset for reverse reads (R2). Create a dataframe from this subset.
+    R2_list = [] # Create empty list for reverse reads to be kept. Rows will be appended for reverse reads that match 'keep' criteria.
+    R2_cols = ['SampleID', 'filename_R2'] # Define column headers
+    subset_fastq_files(fastq_path_R2, keep_path, keep_sample_ids, R2_list)       
+    df_reverse_read_subset = DataFrame(R2_list, columns = R2_cols)
+
+    # Leftjoin forward & reverse read subset dataframes on common column SampleID
+    df_output_csv = df_forward_read_subset.merge(df_reverse_read_subset, on=[ "SampleID" ], how='left')
+
+    # write csv of df_output_csv (three columns: SampleID, FileNameR1, FileNameR2)
+    df_output_csv.to_csv("SampleID_fastq.csv", header = True, index = False)
+
+# Main entrypoint
+if __name__ == '__main__':
+    main()
