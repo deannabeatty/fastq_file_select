@@ -75,13 +75,13 @@ def main():
 
     # Create fastq subset for forward reads (R1). Create a dataframe from this subset.
     R1_list = [] # Create empty list for forward reads to be kept. Rows will be appended for forward reads that match 'keep' criteria.
-    R1_cols = ['SampleID', 'filename_R1'] # Define column headers
+    R1_cols = ['SampleID', 'filename'] # Define column headers
     subset_fastq_files(fastq_path_R1, keep_path, keep_sample_ids, R1_list)       
     df_forward_read_subset = DataFrame(R1_list, columns = R1_cols)
 
     # Create fastq subset for reverse reads (R2). Create a dataframe from this subset.
     R2_list = [] # Create empty list for reverse reads to be kept. Rows will be appended for reverse reads that match 'keep' criteria.
-    R2_cols = ['SampleID', 'filename_R2'] # Define column headers
+    R2_cols = ['SampleID', 'filename2'] # Define column headers
     subset_fastq_files(fastq_path_R2, keep_path, keep_sample_ids, R2_list)       
     df_reverse_read_subset = DataFrame(R2_list, columns = R2_cols)
 
